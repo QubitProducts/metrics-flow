@@ -1,0 +1,11 @@
+.idea 
+*.iml 
+*.env
+*.aes
+
+target
+
+#Eclipse
+.classpath
+.project
+.settings/
