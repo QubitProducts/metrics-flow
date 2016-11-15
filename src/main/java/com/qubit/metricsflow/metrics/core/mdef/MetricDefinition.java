@@ -5,12 +5,13 @@ import com.qubit.metricsflow.metrics.core.types.MetricWindowType;
 
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 
+import java.io.Serializable;
 import java.util.EnumSet;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
 
-public abstract class MetricDefinition<R extends MetricRecorderBase> {
+public abstract class MetricDefinition<R extends MetricRecorderBase> implements Serializable {
     private final String name;
     private final Set<String> labelNames;
     private final EnumSet<MetricAggregationType> fixedWindowAggregations;

@@ -1,6 +1,7 @@
 package com.qubit.metricsflow.core.types;
 
 import com.qubit.metricsflow.metrics.core.event.LabelNameValuePair;
+import com.qubit.metricsflow.metrics.core.mdef.MetricDefinition;
 
 import com.google.cloud.dataflow.sdk.coders.AvroCoder;
 import com.google.cloud.dataflow.sdk.coders.DefaultCoder;
@@ -24,6 +25,11 @@ public class MetricUpdateKey implements Serializable {
         this.metricName = metricName;
         this.labelNameValuePairs = labelNameValuePairs;
         this.labelNameValuePairs.sort(LabelNameValuePair::compareTo);
+    }
+
+    public static MetricUpdateKey of(@Nonnull MetricDefinition<?> mdef,
+                                     @Nonnull List<LabelNameValuePair> labelNameValuePairs) {
+        return MetricUpdateKey.of(mdef.getName(), labelNameValuePairs);
     }
 
     public static MetricUpdateKey of(@Nonnull String metricName,

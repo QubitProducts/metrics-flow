@@ -21,7 +21,7 @@ public class RawMetricDefinition extends MetricDefinition<RawMetricDefinition.Ra
 
     @Override
     public RawMetricRecorder record(DoFn.ProcessContext processContext) {
-        return new RawMetricRecorder(getName(), processContext);
+        return new RawMetricRecorder(this, processContext);
     }
 
     public static class RawMetricBuilder extends MetricDefinitionBuilderBase<RawMetricDefinition, RawMetricBuilder> {
@@ -37,15 +37,15 @@ public class RawMetricDefinition extends MetricDefinition<RawMetricDefinition.Ra
         }
 
         @Override
-        protected RawMetricDefinition createDefinition() {
+        public RawMetricDefinition create() {
             throwExceptionIfParametersAreInvalid();
             return new RawMetricDefinition(name, fixedWindowAggregations, slidingWindowAggregations, labels);
         }
     }
 
     public static class RawMetricRecorder extends MetricRecorderBase<RawMetricRecorder> {
-        protected RawMetricRecorder(String metricName, DoFn.ProcessContext pctx) {
-            super(metricName, pctx);
+        protected RawMetricRecorder(MetricDefinition<RawMetricRecorder> metricDefinition , DoFn.ProcessContext pctx) {
+            super(metricDefinition, pctx);
         }
 
         public void push(double value) {

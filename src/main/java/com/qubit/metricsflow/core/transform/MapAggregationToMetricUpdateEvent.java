@@ -1,8 +1,8 @@
 package com.qubit.metricsflow.core.transform;
 
-import com.qubit.metricsflow.metrics.core.types.MetricAggregationType;
-import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
 import com.qubit.metricsflow.core.types.MetricUpdateKey;
+import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
+import com.qubit.metricsflow.metrics.core.types.MetricAggregationType;
 
 import com.google.cloud.dataflow.sdk.transforms.MapElements;
 import com.google.cloud.dataflow.sdk.transforms.PTransform;

@@ -24,7 +24,7 @@ public class Counter extends MetricDefinition<Counter.CounterMetricRecorder> {
 
     @Override
     public CounterMetricRecorder record(DoFn.ProcessContext processContext) {
-        return new CounterMetricRecorder(getName(), processContext);
+        return new CounterMetricRecorder(this, processContext);
     }
 
     public static class CounterMetricBuilder extends MetricDefinitionBuilderBase<Counter, CounterMetricBuilder> {
@@ -33,15 +33,16 @@ public class Counter extends MetricDefinition<Counter.CounterMetricRecorder> {
         }
 
         @Override
-        protected Counter createDefinition() {
+        public Counter create() {
             throwExceptionIfParametersAreInvalid();
             return new Counter(name, fixedWindowAggregations, slidingWindowAggregations, labels);
         }
     }
 
     public static class CounterMetricRecorder extends MetricRecorderBase<CounterMetricRecorder> {
-        protected CounterMetricRecorder(String metricName, DoFn.ProcessContext pctx) {
-            super(metricName, pctx);
+        protected CounterMetricRecorder(MetricDefinition<CounterMetricRecorder> metricDefinition,
+                                        DoFn.ProcessContext pctx) {
+            super(metricDefinition, pctx);
         }
 
         public void inc() {

@@ -1,7 +1,7 @@
 package com.qubit.metricsflow.core.transform;
 
 import com.qubit.metricsflow.metrics.MetricsBox;
-import com.qubit.metricsflow.core.utils.MetricsConsts;
+import com.qubit.metricsflow.core.utils.MetricUtils;
 
 import com.google.cloud.dataflow.sdk.transforms.PTransform;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
@@ -22,7 +22,7 @@ public class PTransformForParDoBound<InputT, OutputT>
     @Override
     public PCollection<OutputT> apply(PCollection<InputT> input) {
         PCollectionTuple result = input.apply(boundMulti);
-        mbox.add(result.get(MetricsConsts.METRICS_TAG));
-        return result.get(new TupleTag<OutputT>(MetricsConsts.DEFAULT_STREAM_NAME));
+        mbox.add(result.get(MetricUtils.METRICS_TAG));
+        return result.get(new TupleTag<OutputT>(MetricUtils.DEFAULT_STREAM_NAME));
     }
 }

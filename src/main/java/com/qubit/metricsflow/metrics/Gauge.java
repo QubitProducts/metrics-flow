@@ -26,7 +26,7 @@ public class Gauge extends MetricDefinition<Gauge.GaugeMetricRecorder> {
 
     @Override
     public GaugeMetricRecorder record(DoFn.ProcessContext processContext) {
-        return new GaugeMetricRecorder(getName(), processContext);
+        return new GaugeMetricRecorder(this, processContext);
     }
 
     public static class GaugeMetricBuilder extends MetricDefinitionBuilderBase<Gauge, GaugeMetricBuilder> {
@@ -51,15 +51,16 @@ public class Gauge extends MetricDefinition<Gauge.GaugeMetricRecorder> {
         }
 
         @Override
-        protected Gauge createDefinition() {
+        public Gauge create() {
             throwExceptionIfParametersAreInvalid();
             return new Gauge(name, fixedWindowAggregations, slidingWindowAggregations, labels);
         }
     }
 
     public static class GaugeMetricRecorder extends MetricRecorderBase<GaugeMetricRecorder> {
-        protected GaugeMetricRecorder(String metricName, DoFn.ProcessContext pctx) {
-            super(metricName, pctx);
+        protected GaugeMetricRecorder(MetricDefinition<GaugeMetricRecorder> metricDefinition,
+                                      DoFn.ProcessContext pctx) {
+            super(metricDefinition, pctx);
         }
 
         public void set(double value) {

@@ -1,13 +1,14 @@
 package com.qubit.metricsflow.core.transform;
 
-import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
 import com.qubit.metricsflow.core.combines.CombineMax;
 import com.qubit.metricsflow.core.combines.CombineMean;
 import com.qubit.metricsflow.core.combines.CombineMin;
 import com.qubit.metricsflow.core.combines.CombineSum;
 import com.qubit.metricsflow.core.fn.BranchByAggregationType;
 import com.qubit.metricsflow.core.types.MetricUpdateKey;
+import com.qubit.metricsflow.core.types.MetricUpdateValue;
 import com.qubit.metricsflow.core.utils.MetricTypeTags;
+import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
 import com.qubit.metricsflow.metrics.core.types.MetricWindowType;
 
 import com.google.cloud.dataflow.sdk.transforms.Flatten;
@@ -19,7 +20,7 @@ import com.google.cloud.dataflow.sdk.values.PCollectionList;
 import com.google.cloud.dataflow.sdk.values.PCollectionTuple;
 import com.google.cloud.dataflow.sdk.values.TupleTag;
 
-public class ApplyAggregationTransforms extends PTransform<PCollection<KV<MetricUpdateKey, Double>>,
+public class ApplyAggregationTransforms extends PTransform<PCollection<KV<MetricUpdateKey, MetricUpdateValue>>,
     PCollection<MetricUpdateEvent>> {
     private MetricWindowType windowType;
 
@@ -29,8 +30,7 @@ public class ApplyAggregationTransforms extends PTransform<PCollection<KV<Metric
     }
 
     @Override
-    public PCollection<MetricUpdateEvent> apply(
-        PCollection<KV<MetricUpdateKey, Double>> input) {
+    public PCollection<MetricUpdateEvent> apply(PCollection<KV<MetricUpdateKey, MetricUpdateValue>> input) {
 
         PCollectionTuple result = input.apply(
             ParDo.of(new BranchByAggregationType(windowType))

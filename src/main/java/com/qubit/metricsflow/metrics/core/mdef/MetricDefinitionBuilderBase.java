@@ -1,6 +1,5 @@
 package com.qubit.metricsflow.metrics.core.mdef;
 
-import com.qubit.metricsflow.metrics.MetricsRegistry;
 import com.qubit.metricsflow.metrics.core.types.MetricAggregationType;
 
 import java.util.Arrays;
@@ -48,11 +47,5 @@ public abstract class MetricDefinitionBuilderBase<M extends MetricDefinition, B 
         }
     }
 
-    public M register() {
-        M mdef = this.createDefinition();
-        MetricsRegistry.getDefaultRegistry().register(mdef);
-        return mdef;
-    }
-
-    protected abstract M createDefinition();
+    public abstract M create();
 }

@@ -1,6 +1,7 @@
 package com.qubit.metricsflow.core.transform;
 
 import com.qubit.metricsflow.core.types.MetricUpdateKey;
+import com.qubit.metricsflow.core.types.MetricUpdateValue;
 import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
 import com.qubit.metricsflow.metrics.core.types.MetricWindowType;
 
@@ -20,9 +21,9 @@ public class ApplySlidingWindowAggregations extends ApplyWindowAggregations {
     }
 
     @Override
-    public PCollection<MetricUpdateEvent> apply(PCollection<KV<MetricUpdateKey, Double>> input) {
+    public PCollection<MetricUpdateEvent> apply(PCollection<KV<MetricUpdateKey, MetricUpdateValue>> input) {
         return input.apply(
-            Window.<KV<MetricUpdateKey, Double>>into(
+            Window.<KV<MetricUpdateKey, MetricUpdateValue>>into(
                 SlidingWindows.of(windowDuration).every(windowPeriod))
                 .named("CollectInSlidingWindow")
         ).apply(new ApplyAggregationTransforms(MetricWindowType.Sliding));
