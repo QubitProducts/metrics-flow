@@ -31,7 +31,7 @@ public interface MetricsFlowOptions extends DataflowPipelineOptions {
     void setSlidingWindowPeriodSec(Integer seconds);
 
     @Validation.Required
-    @Description("Output topic name")
-    String getOutputTopicName();
-    void setOutputTopicName(String topicName);
+    @Description("Output Pub/Sub topic name")
+    String getMetricsOutputTopicName();
+    void setMetricsOutputTopicName(String topicName);
 }

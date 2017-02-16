@@ -4,7 +4,6 @@ import com.qubit.metricsflow.core.utils.WindowTypeTags;
 import com.qubit.metricsflow.metrics.Counter;
 import com.qubit.metricsflow.metrics.Gauge;
 import com.qubit.metricsflow.metrics.MetricsBox;
-import com.qubit.metricsflow.metrics.core.event.InnerMetricUpdateEvent;
 import com.qubit.metricsflow.metrics.core.event.LabelNameValuePair;
 import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
 
@@ -18,11 +17,11 @@ import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
 import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.dataflow.sdk.values.PCollectionTuple;
+import org.joda.time.Instant;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.LinkedList;
 
 public class MetricsFlowIT {
@@ -31,6 +30,13 @@ public class MetricsFlowIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(MetricsFlowIT.class);
     private static MetricsFlowOptions options = PipelineOptionsFactory.create().as(MetricsFlowOptions.class);
+
+    private static class OutputWithCurrentTs extends DoFn<String, String> {
+        @Override
+        public void processElement(ProcessContext processContext) throws Exception {
+            processContext.outputWithTimestamp(processContext.element(), Instant.now());
+        }
+    }
 
     private static class DoFnWithCounter extends DoFn<String, String> {
         private static Counter numStrings = Counter
@@ -70,50 +76,22 @@ public class MetricsFlowIT {
         }
     }
 
-    public static class IdentityDoFn extends DoFn<MetricUpdateEvent, MetricUpdateEvent> {
-
-        @Override
-        public void processElement(ProcessContext processContext) throws Exception {
-            MetricUpdateEvent event = processContext.element();
-            LOG.info("Metric {} => {} ... ", event.getName(), event.getValue());
-            LOG.info("  Labels:");
-            event.getLabelNameValuePairs().forEach(nvPair -> {
-                LOG.info("    {} -> {}", nvPair.getName(), nvPair.getValue());
-            });
-
-            processContext.output(event);
-        }
-    }
-
-    @Test
-    public void testSerialization() throws IOException {
-        /*Counter numStrings = Counter
-            .build()
-            .named(CTR_METRIC_NAME)
-            .labels("chuck", "doctor")
-            .create();
-
-        MetricRegistry r = MetricRegistry.getDefaultRegistry();
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = new ObjectOutputStream(bos);
-        out.writeObject(r);
-        byte[] xxx = bos.toByteArray();*/
-    }
-
     @Test
     public void checkThatDifferentMetricsWorkWellTogether() {
+        options.setSlidingWindowDurationSec(10);
+        options.setSlidingWindowPeriodSec(5);
+
         Pipeline p = TestPipeline.create(options);
         MetricsBox mbox = MetricsBox.of(p);
 
         p.apply(Create.of("s1x", "s2xx", "s3xxx", "s4xxxx"))
+            .apply(ParDo.of(new OutputWithCurrentTs()))
             .apply(CollectMetrics.from(ParDo.of(new DoFnWithCounter())).into(mbox))
             .apply(CollectMetrics.from(ParDo.of(new DoFnWithGauge())).into(mbox));
 
         PCollectionTuple result = mbox.applyAggregations(options);
-        PCollection<MetricUpdateEvent> fixedWindowResults = result.get(WindowTypeTags.FIXED_OUT)
-            .apply(ParDo.of(new IdentityDoFn()));
-        PCollection<MetricUpdateEvent> slidingWindowEvents = result.get(WindowTypeTags.SLIDING_OUT)
-            .apply(ParDo.of(new IdentityDoFn()));
+        PCollection<MetricUpdateEvent> fixedWindowResults = result.get(WindowTypeTags.FIXED_OUT);
+        PCollection<MetricUpdateEvent> slidingWindowEvents = result.get(WindowTypeTags.SLIDING_OUT);
 
         MetricUpdateEvent
             counterUpdateEvent = createMUEvent(CTR_METRIC_NAME + "_sum", 4, "chuck=norris", "doctor=who");
@@ -122,7 +100,7 @@ public class MetricsFlowIT {
         MetricUpdateEvent gaugeMavgEvent = createMUEvent(GAUGE_METRIC_NAME + "_mean", 4.5, "jack=is-a", "dull=boy");
 
         DataflowAssert.that(fixedWindowResults).containsInAnyOrder(counterUpdateEvent, gaugeMaxEvent, gaugeMinEvent);
-        //DataflowAssert.that(slidingWindowEvents).containsInAnyOrder(gaugeMavgEvent);
+        DataflowAssert.that(slidingWindowEvents).containsInAnyOrder(gaugeMavgEvent, gaugeMavgEvent);
 
         p.run();
     }
@@ -141,13 +119,5 @@ public class MetricsFlowIT {
 
         nvPairs.sort(LabelNameValuePair::compareTo);
         return new MetricUpdateEvent(name, nvPairs, value);
-    }
-
-    private void dumpMetric(InnerMetricUpdateEvent event) {
-        LOG.info("Metric {} => {} ... ", event.getName(), event.getValue());
-        LOG.info("  Labels:");
-        event.getLabelNameValuePairs().forEach(nvPair -> {
-            LOG.info("    {} -> {}", nvPair.getName(), nvPair.getValue());
-        });
     }
 }

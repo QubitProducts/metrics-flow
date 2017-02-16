@@ -2,6 +2,7 @@ package com.qubit.metricsflow.metrics;
 
 import com.qubit.metricsflow.core.MetricsFlowOptions;
 import com.qubit.metricsflow.core.fn.BranchByWindowType;
+import com.qubit.metricsflow.core.fn.ConvertMetricUpdateEventToJson;
 import com.qubit.metricsflow.core.fn.VerifyMetricKey;
 import com.qubit.metricsflow.core.transform.ApplyFixedWindowAggregations;
 import com.qubit.metricsflow.core.transform.ApplySlidingWindowAggregations;
@@ -11,7 +12,6 @@ import com.qubit.metricsflow.core.utils.WindowTypeTags;
 import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
 
 import com.google.cloud.dataflow.sdk.Pipeline;
-import com.google.cloud.dataflow.sdk.coders.AvroCoder;
 import com.google.cloud.dataflow.sdk.io.PubsubIO;
 import com.google.cloud.dataflow.sdk.transforms.Flatten;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
@@ -65,10 +65,10 @@ public class MetricsBox {
 
     private void writeResultsToPubSub(PCollection<MetricUpdateEvent> results, MetricsFlowOptions options) {
         results
+            .apply(ParDo.of(new ConvertMetricUpdateEventToJson()))
             .apply(
-                PubsubIO.Write.topic(options.getOutputTopicName())
+                PubsubIO.Write.topic(options.getMetricsOutputTopicName())
                 .named("WriteMetricsToPubSub")
-                .withCoder(AvroCoder.of(MetricUpdateEvent.class))
             );
     }
 
