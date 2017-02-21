@@ -89,7 +89,7 @@ public class MetricsFlowIT {
             .apply(CollectMetrics.from(ParDo.of(new DoFnWithCounter())).into(mbox))
             .apply(CollectMetrics.from(ParDo.of(new DoFnWithGauge())).into(mbox));
 
-        PCollectionTuple result = mbox.applyAggregations(options);
+        PCollectionTuple result = mbox.apply();
         PCollection<MetricUpdateEvent> fixedWindowResults = result.get(WindowTypeTags.FIXED_OUT);
         PCollection<MetricUpdateEvent> slidingWindowEvents = result.get(WindowTypeTags.SLIDING_OUT);
 
