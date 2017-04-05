@@ -77,7 +77,7 @@ public class MetricsFlowIT {
     }
 
     @Test
-    public void checkThatDifferentMetricsWorkWellTogether() {
+    public void checkIfItAllWorksTogether_pleaseDoNotBreakIt() {
         options.setSlidingWindowDurationSec(10);
         options.setSlidingWindowPeriodSec(5);
 
