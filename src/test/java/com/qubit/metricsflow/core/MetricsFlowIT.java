@@ -19,16 +19,12 @@ import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.dataflow.sdk.values.PCollectionTuple;
 import org.joda.time.Instant;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 
 public class MetricsFlowIT {
     private static final String CTR_METRIC_NAME = "my_special_counter";
     private static final String GAUGE_METRIC_NAME = "my_special_gauge";
-
-    private static final Logger LOG = LoggerFactory.getLogger(MetricsFlowIT.class);
     private static MetricsFlowOptions options = PipelineOptionsFactory.create().as(MetricsFlowOptions.class);
 
     private static class OutputWithCurrentTs extends DoFn<String, String> {
