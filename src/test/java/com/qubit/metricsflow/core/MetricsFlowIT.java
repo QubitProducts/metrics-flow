@@ -94,10 +94,10 @@ public class MetricsFlowIT {
         PCollection<MetricUpdateEvent> slidingWindowEvents = result.get(WindowTypeTags.SLIDING_OUT);
 
         MetricUpdateEvent
-            counterUpdateEvent = createMUEvent(CTR_METRIC_NAME + "_sum", 4, "chuck=norris", "doctor=who");
-        MetricUpdateEvent gaugeMaxEvent = createMUEvent(GAUGE_METRIC_NAME + "_max", 6, "jack=is-a", "dull=boy");
-        MetricUpdateEvent gaugeMinEvent = createMUEvent(GAUGE_METRIC_NAME + "_min", 3, "jack=is-a", "dull=boy");
-        MetricUpdateEvent gaugeMavgEvent = createMUEvent(GAUGE_METRIC_NAME + "_mean", 4.5, "jack=is-a", "dull=boy");
+            counterUpdateEvent = createMUEvent(CTR_METRIC_NAME + "_counter", 4, "chuck=norris", "doctor=who");
+        MetricUpdateEvent gaugeMaxEvent = createMUEvent(GAUGE_METRIC_NAME + "_max_gauge", 6, "jack=is-a", "dull=boy");
+        MetricUpdateEvent gaugeMinEvent = createMUEvent(GAUGE_METRIC_NAME + "_min_gauge", 3, "jack=is-a", "dull=boy");
+        MetricUpdateEvent gaugeMavgEvent = createMUEvent(GAUGE_METRIC_NAME + "_mean_gauge", 4.5, "jack=is-a", "dull=boy");
 
         DataflowAssert.that(fixedWindowResults).containsInAnyOrder(counterUpdateEvent, gaugeMaxEvent, gaugeMinEvent);
         DataflowAssert.that(slidingWindowEvents).containsInAnyOrder(gaugeMavgEvent, gaugeMavgEvent);

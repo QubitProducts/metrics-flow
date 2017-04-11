@@ -16,7 +16,7 @@ public class MapAggregationToMetricUpdateEvent extends PTransform<PCollection<KV
     private String metricNameSuffix;
 
     public MapAggregationToMetricUpdateEvent(MetricAggregationType aggregationType) {
-        metricNameSuffix = aggregationType.toString().toLowerCase();
+        metricNameSuffix = MetricAggregationType.toMetricNameSuffix(aggregationType);
     }
 
     @Override

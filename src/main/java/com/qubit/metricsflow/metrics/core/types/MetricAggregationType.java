@@ -9,6 +9,17 @@ public enum MetricAggregationType implements Serializable {
     Mean;
 
     public static String toMetricNameSuffix(MetricAggregationType type) {
-        return type.toString().toLowerCase();
+        switch (type) {
+            case Sum:
+                return "counter";
+            case Min:
+                return "min_gauge";
+            case Max:
+                return "max_gauge";
+            case Mean:
+                return "mean_gauge";
+            default:
+                throw new RuntimeException("Unknown metric type " + type.toString());
+        }
     }
 }
