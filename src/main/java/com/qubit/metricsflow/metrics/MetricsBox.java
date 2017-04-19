@@ -39,8 +39,10 @@ public class MetricsBox {
     public void run() {
         DumpMetricsTransform outTransform = getTransformFromOptions();
         PCollectionTuple tpl = metricsCollections.apply(MFLOW_TRANSFORM_NAME, new ApplyMetricsFlowTransforms());
-        tpl.get(WindowTypeTags.FIXED_OUT).apply("FixedWindowMetricsOut", outTransform);
-        tpl.get(WindowTypeTags.SLIDING_OUT).apply("SlidingWindowMetricsOut", outTransform);
+        tpl.get(WindowTypeTags.FIXED_OUT)
+            .apply("FixedWindowMetricsOut", outTransform);
+        tpl.get(WindowTypeTags.SLIDING_OUT)
+            .apply("SlidingWindowMetricsOut", outTransform);
     }
 
     private DumpMetricsTransform getTransformFromOptions() {

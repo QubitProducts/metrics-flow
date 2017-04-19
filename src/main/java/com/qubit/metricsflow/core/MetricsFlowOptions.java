@@ -34,4 +34,14 @@ public interface MetricsFlowOptions extends DataflowPipelineOptions {
     @Description("Output resource name (pubsub://<topic>, gs://<bucket>/<path-to-file>, logging)")
     String getMetricsOutputResourceName();
     void setMetricsOutputResourceName(String resourceName);
+
+    @Validation.Required
+    @Default.Boolean(false)
+    Boolean getIncludeProjectNameLabel();
+    void setIncludeProjectNameLabel(Boolean includeProjectNameLabel);
+
+    @Validation.Required
+    @Default.Boolean(false)
+    Boolean getIncludeJobNameLabel();
+    void setIncludeJobNameLabel(Boolean includeJobNameLabel);
 }

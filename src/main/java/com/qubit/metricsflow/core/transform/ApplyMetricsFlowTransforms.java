@@ -39,10 +39,14 @@ public class ApplyMetricsFlowTransforms
             .and(WindowTypeTags.FIXED_OUT,
                  results.get(WindowTypeTags.FIXED_IN)
                      .apply(new ApplyFixedWindowAggregations(options.getFixedWindowDurationSec(),
-                                                             options.getFixedWindowAllowedLatenessSec())))
+                                                             options.getFixedWindowAllowedLatenessSec()))
+                     .apply(new IncludeExtraLabels())
+            )
             .and(WindowTypeTags.SLIDING_OUT,
                  results.get(WindowTypeTags.SLIDING_IN)
                      .apply(new ApplySlidingWindowAggregations(options.getSlidingWindowDurationSec(),
-                                                               options.getSlidingWindowPeriodSec())));
+                                                               options.getSlidingWindowPeriodSec()))
+                     .apply(new IncludeExtraLabels())
+            );
     }
 }
