@@ -1,5 +1,6 @@
 package com.qubit.metricsflow.metrics.core.mdef;
 
+import com.qubit.metricsflow.core.MetricsFlowOptions;
 import com.qubit.metricsflow.core.types.MetricUpdateKey;
 import com.qubit.metricsflow.core.types.MetricUpdateValue;
 import com.qubit.metricsflow.core.utils.MetricUtils;
@@ -16,10 +17,12 @@ public abstract class MetricRecorderBase<R extends MetricRecorderBase> implement
     private MetricDefinition<R> metricDefinition;
     private DoFn.ProcessContext pctx;
     private List<LabelNameValuePair> labelValues = new LinkedList<>();
+    private boolean metricsEnabled;
 
     public MetricRecorderBase(MetricDefinition<R> metricDefinition, DoFn.ProcessContext pctx) {
         this.metricDefinition = metricDefinition;
         this.pctx = pctx;
+        this.metricsEnabled = pctx.getPipelineOptions().as(MetricsFlowOptions.class).getMetricsEnabled();
     }
 
     public R withLabel(String labelName, String labelValue) {
@@ -28,10 +31,12 @@ public abstract class MetricRecorderBase<R extends MetricRecorderBase> implement
     }
 
     protected void doPush(double value) {
-        KV<MetricUpdateKey, MetricUpdateValue> event = KV.of(
-            MetricUpdateKey.of(metricDefinition, labelValues),
-            MetricUpdateValue.of(metricDefinition, value)
-        );
-        pctx.sideOutput(MetricUtils.METRICS_TAG, event);
+        if (metricsEnabled) {
+            KV<MetricUpdateKey, MetricUpdateValue> event = KV.of(
+                MetricUpdateKey.of(metricDefinition, labelValues),
+                MetricUpdateValue.of(metricDefinition, value)
+            );
+            pctx.sideOutput(MetricUtils.METRICS_TAG, event);
+        }
     }
 }

@@ -44,4 +44,9 @@ public interface MetricsFlowOptions extends DataflowPipelineOptions {
     @Default.Boolean(false)
     Boolean getIncludeJobNameLabel();
     void setIncludeJobNameLabel(Boolean includeJobNameLabel);
+
+    @Validation.Required
+    @Default.Boolean(true)
+    Boolean getMetricsEnabled();
+    void setMetricsEnabled(Boolean metricsEnabled);
 }
