@@ -15,6 +15,7 @@ public class PTransformForParDoBound<InputT, OutputT>
     private final ParDo.BoundMulti<InputT, OutputT> boundMulti;
 
     public PTransformForParDoBound(ParDo.BoundMulti<InputT, OutputT> boundMulti, MetricsBox mbox) {
+        super(boundMulti.getName());
         this.mbox = mbox;
         this.boundMulti = boundMulti;
     }

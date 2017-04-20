@@ -13,6 +13,7 @@ public class PTransformForParDoBoundMulti<InputT, OutputT> extends PTransform<PC
     private final ParDo.BoundMulti<InputT, OutputT> boundMulti;
 
     public PTransformForParDoBoundMulti(ParDo.BoundMulti<InputT, OutputT> boundMulti, MetricsBox mbox) {
+        super(boundMulti.getName());
         this.boundMulti = boundMulti;
         this.mbox = mbox;
     }

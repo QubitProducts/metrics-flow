@@ -20,18 +20,18 @@ public interface MetricsFlowOptions extends DataflowPipelineOptions {
 
     @Validation.Required
     @Description("Sliding window duration in seconds")
-    @Default.Integer(30)
+    @Default.Integer(10)
     Integer getSlidingWindowDurationSec();
     void setSlidingWindowDurationSec(Integer seconds);
 
     @Validation.Required
     @Description("Sliding window period in seconds")
-    @Default.Integer(15)
+    @Default.Integer(10)
     Integer getSlidingWindowPeriodSec();
     void setSlidingWindowPeriodSec(Integer seconds);
 
     @Validation.Required
-    @Description("Output resource name (pubsub://<topic>, gs://<bucket>/<path-to-file>, logging)")
+    @Description("Output resource name (pubsub://<topic>, gs://<bucket>/<path-to-file>, log)")
     String getMetricsOutputResourceName();
     void setMetricsOutputResourceName(String resourceName);
 
