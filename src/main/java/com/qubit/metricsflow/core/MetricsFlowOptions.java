@@ -8,7 +8,7 @@ import com.google.cloud.dataflow.sdk.options.Validation;
 public interface MetricsFlowOptions extends DataflowPipelineOptions {
     @Validation.Required
     @Description("Fixed window duration in seconds")
-    @Default.Integer(15)
+    @Default.Integer(10)
     Integer getFixedWindowDurationSec();
     void setFixedWindowDurationSec(Integer seconds);
 
@@ -20,7 +20,7 @@ public interface MetricsFlowOptions extends DataflowPipelineOptions {
 
     @Validation.Required
     @Description("Sliding window duration in seconds")
-    @Default.Integer(10)
+    @Default.Integer(5)
     Integer getSlidingWindowDurationSec();
     void setSlidingWindowDurationSec(Integer seconds);
 
