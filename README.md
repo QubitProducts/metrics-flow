@@ -13,7 +13,7 @@ and aggregate all the metrics from all the different instances a DoFn is running
 One way to approach this problem is to expose a prometheus endpoint from each Dataflow worker individually and do the aggregation on Prometheus
 side (by grouping metrics by label or something like that) but
   1. it won't work with [autoscaling](https://cloud.google.com/dataflow/service/dataflow-service-desc#autoscaling) (when the number of dataflow workers change dynamically depending on the current load) as the addresses of `scraping targets` are statically set up in Prometheus config. 
-  2. you need to make sure Prometheus can reach each worker to scrape the metrics (you mgiht need a custom worker image for that but not sure)
+  2. you need to make sure Prometheus can reach each worker to scrape the metrics (you might need a custom worker image for that)
 
 Another way is to use [java-statsd-client](https://github.com/tim-group/java-statsd-client) with [statsd_exporter](https://github.com/prometheus/statsd_exporter) but there's one probelem: the library sends a UDP packet _every time a metric is updated_, which may lead to significant overhead once the pipeline starts generating tens of thouthands of metrics.
 
