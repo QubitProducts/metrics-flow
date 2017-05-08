@@ -48,9 +48,5 @@ public class Counter extends MetricDefinition<Counter.CounterMetricRecorder> {
         public void inc() {
             super.doPush(1.0);
         }
-
-        public void dec() {
-            super.doPush(-1.0);
-        }
     }
 }
