@@ -118,7 +118,7 @@ Every time a metric is recorded from a DoFn, `metrics-flow` sends an event to a 
  some code that gives an impression of how it all fits together:
 
 ```java
-    private static class DoFnWithCounter extends DoFn<Event, ...> {
+    private static class CollectEvents extends DoFn<Event, ...> {
         // I want a counter metric with two labels: userGroup and comanyName
         private static Counter numVisits = Counter
             .build()
@@ -133,10 +133,11 @@ Every time a metric is recorded from a DoFn, `metrics-flow` sends an event to a 
                 .withLabel("userGroup", event.getUserGroup())
                 .withLabel("companyName", event.getCompanyName())
                 .inc();
+            ...
         }
     }
     
-    private static class DoFnWithGauge extends DoFn<Event, ...> {
+    private static class EventsToBigtableMutations extends DoFn<Event, ...> {
         // I want a gague metric to calculate an average latency of my DoFn (actually I want it to be a moving average),
         // as well as its max and min values (for the sake of example) and I want it to have one label: eventType
         private static Gauge expensiveFunctionPerf = Gauge
@@ -156,6 +157,7 @@ Every time a metric is recorded from a DoFn, `metrics-flow` sends an event to a 
             expensiveFunctionPerf.record(processContext) // boom, that's it, emit the event
                 .withLabel("eventType", event.getType().toString())
                 .set(System.currentTimeMillis() - ts);
+            ...
         }
     }
 
@@ -164,16 +166,24 @@ Every time a metric is recorded from a DoFn, `metrics-flow` sends an event to a 
     MetricsBox mbox = MetricsBox.of(pipeline);
 
     // And that's how the pipeline may look like
-    pipeline.apply(new ReadDataFromSomewhere())
-        .apply(ParDo.of(new DoFnWithoutCounter())) // a function that doesn't use metrics
-        .apply(CollectMetrics.from(ParDo.of(new DoFnWithMetrics())).into(mbox)) // a function that does use metrics
-        .apply(ParDo.of(new AnotherDoFnWithoutMetrics))
-        .apply(CollectMetrics.from(ParDo.of(new DoFnWithGauge())).into(mbox))
+    pipeline.apply(new ReadFromPubSub())
+        .apply(ParDo.of(new FilterById())) // has no metrics
+        .apply(CollectMetrics.from(
+               ParDo.of(new CollectEvents())).into(mbox)
+        )
+        .apply(CollectMetrics.from(
+               ParDo.of(new EventsToBigtableMutations())).into(mbox)
+        )
+        .apply(CloudBigtableIO.writeToTable(...))
         ...
 
     mbox.run(); // that's it
     ...
 ```
+
+<p align="center">
+<img src="misc/metrics-flow-pic.png" width="500">
+</p>
 
 # Build and setup
 <a name="build">
