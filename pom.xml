@@ -6,7 +6,17 @@
 
     <artifactId>metrics-flow</artifactId>
     <groupId>com.qubit</groupId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
+    <packaging>jar</packaging>
+
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>
+        metrics-flow is a library that allows to create, aggregate and
+        collect custom monitoring metrics from Dataflow pipelines and,
+        with help of a small daemon mflowd, put them to Prometheus,
+        a time-series database by SoundCloud.
+    </description>
+    <url>https://github.com/QubitProducts/metrics-flow</url>
 
     <properties>
         <dataflow.version>1.9.0</dataflow.version>
@@ -98,5 +108,26 @@
         </plugins>
     </build>
 
+    <licenses>
+        <license>
+            <name>The 3-Clause BSD License</name>
+            <url>https://opensource.org/licenses/BSD-3-Clause</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Dan Kruchinin</name>
+            <email>daniil@qubit.com</email>
+            <organization>Qubit</organization>
+            <organizationUrl>http://www.qubit.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/QubitProducts/metrics-flow</connection>
+        <developerConnection>scm:git:ssh://github.com:QubitProducts/metrics-flow.git</developerConnection>
+        <url>https://github.com/QubitProducts/metrics-flow/tree/master</url>
+    </scm>
 
 </project>
