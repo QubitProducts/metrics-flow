@@ -1,10 +1,22 @@
+# TOC
+* [Google Dataflow custom metrics made easy](#intro)  
+* [Why the heck do I need another metrics library?](#explanation)
+* [So what exactly can it do?](#features)
+  * [Counter](#counter)
+  * [Gauge](#gauge)
+  * [Shut up and show me the code](#code)
+* [Build and setup](#build)
+  * [Configuration options](#options)
+
 # Google Dataflow custom metrics made easy
+<a name="intro"/>
 
 `metrics-flow` is a library that allows to create, aggregate and collect custom monitoring metrics from [Dataflow](https://cloud.google.com/dataflow/)
 pipelines and, with help of a small daemon [mflowd](https://github.com/qubitdigital/mflowd), put them to [Prometheus](https://prometheus.io/), 
 a time-series database by SoundCloud.
 
-## Why the heck do I need another metrics library? 
+# Why the heck do I need another metrics library?
+<a name="explanation"/>
 
 Dataflow [DoFns](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/transforms/DoFn), the functions
 you want to collect metrics from, are usually distributed across multiple machines (Dataflow workers), which makes it tricky to collect 
@@ -22,6 +34,7 @@ for your metrics and launch `mflowd` polling the topic subscription and that's i
 it won't loose your metrics when `mflowd` or Prometheus is down (thanks to Google pub/sub) and finally it will pre-aggregate metrics locally (using [window](https://cloud.google.com/dataflow/model/windowing) functions) before writing them to the queue which significantly reduces the number of emited metric update events. Once the metrics are pre-aggregated they are sent to the pub/sub topic which is polled by the `mflowd` daemon that exposes all the metrics it has received to Prometheus.
 
 # So what exactly can it do?
+<a name="features">
 
 The library is designed to look and feel like [prometheus java client](https://github.com/prometheus/client_java) but there're some minor differences due to the nature of Google Dataflow. The basics are all the same. There're different types of metrics, each metric has a unique name and may have a set of labels (or dimentions) associated with it. Supported metric types:
 
@@ -31,6 +44,7 @@ The library is designed to look and feel like [prometheus java client](https://g
 Below you can find more information about each of them.
 
 ## Counter
+<a name="counter">
 
 Counters are strictly increasing values, they can only go up.
 
@@ -55,6 +69,7 @@ Counters are strictly increasing values, they can only go up.
 ```
 
 ## Gauge
+<a name="gauge">
 
 Unlike counters, gauge metrics don't have any restrictions on the way they can chage. Any floating point value can be assigned to a gauge.
 Unlike classic gauges that you might have met in the prometheus java client library, the ones from `metrics-flow` are slightly more complex as they allow user to select a type of aggregation function (or functions) that will be applied to the recorded values.
@@ -94,26 +109,8 @@ Gauge metric supports four different types of aggregations. Almost all of them c
 
 Aggregation function type is automatically appended to the name of your metric before it is sent to `mflowd`. So that `eventType` from the code above will result in three different metrics in Prometheus: *eventType_mean*, *eventType_max* and *eventType_min*.
 
-## Configuration options
-
-Once you inherit your pipeline options class from `MetricsFlowOptions` you get a bunch of configuration parameters to tweak:
-
-**Basic options**:
-* *metricsOutputResourceName*: controls where to send pre-aggregated metrics. There're three options available at the moment:
-   * `pubsub://<topic-nmae>`: dump metrics to a pub/sub topic
-   * `gs://<bucket-name>/<path-to-file>`: dump metrics to [Google Cloud Storage](https://cloud.google.com/storage/docs/cloud-console) (NOTE: works only in batch mode)
-   * `log`: just write pre-aggregated metrics to your dataflow pipeline logs with `INFO` log level 
-* *includeJobNameLabel:* if set to true metrics-flow automatically adds `gcpJobName` label containing current dataflow job name (default: false)
-* *includeProjectNameLabel*: if set to true metrics-flow adds `gcpProjcetName` label that will include current dataflow project name (default: false)
-* *metricsEnabled*: set to false to disable metrics-flow (default: true)
-
-**Advanced options:**
-* *fixedWindowDurationSec* the duration of fixed window used for pre-aggregation of counters, max, min and avg gagues (default=10).
-* *fixedWindowAllowedLatenessSec* allowed lateness (default=0), see [this](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/transforms/windowing/Window.html#withAllowedLateness-org.joda.time.Duration-) for more information
-* *slidingWindowDurationSec* sliding window duration (default=5)
-* *slidingWindowPeriodSec* sliding window period (default=10s)
-
 ## Shut up and show me the code!
+<a name="code">
 
 Every time a metric is recorded from a DoFn, `metrics-flow` sends an event to a [side output](https://cloud.google.com/dataflow/model/par-do#emitting-to-side-outputs-in-your-dofn) that 
  is transparently added to the DoFn. All the metric events emitted from DoFns get forwarded to  
@@ -177,3 +174,28 @@ Every time a metric is recorded from a DoFn, `metrics-flow` sends an event to a 
     mbox.run(); // that's it
     ...
 ```
+
+# Build and setup
+<a name="build">
+
+      mvn clean install
+
+## Configuration options
+<a name="options">
+
+Once you inherit your pipeline options class from `MetricsFlowOptions` you get a bunch of configuration parameters to tweak:
+
+**Basic options**:
+* *metricsOutputResourceName*: controls where to send pre-aggregated metrics. There're three options available at the moment:
+   * `pubsub://<topic-nmae>`: dump metrics to a pub/sub topic
+   * `gs://<bucket-name>/<path-to-file>`: dump metrics to [Google Cloud Storage](https://cloud.google.com/storage/docs/cloud-console) (NOTE: works only in batch mode)
+   * `log`: just write pre-aggregated metrics to your dataflow pipeline logs with `INFO` log level 
+* *includeJobNameLabel:* if set to true metrics-flow automatically adds `gcpJobName` label containing current dataflow job name (default: false)
+* *includeProjectNameLabel*: if set to true metrics-flow adds `gcpProjcetName` label that will include current dataflow project name (default: false)
+* *metricsEnabled*: set to false to disable metrics-flow (default: true)
+
+**Advanced options:**
+* *fixedWindowDurationSec* the duration of fixed window used for pre-aggregation of counters, max, min and avg gagues (default=10).
+* *fixedWindowAllowedLatenessSec* allowed lateness (default=0), see [this](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/transforms/windowing/Window.html#withAllowedLateness-org.joda.time.Duration-) for more information
+* *slidingWindowDurationSec* sliding window duration (default=5)
+* *slidingWindowPeriodSec* sliding window period (default=10s)
