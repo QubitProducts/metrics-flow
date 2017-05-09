@@ -8,7 +8,7 @@
 * [Build and setup](#build)
   * [Configuration options](#options)
 
-# Google Dataflow custom metrics made easy
+# Google Dataflow custom metrics made easy ![Build Status](https://travis-ci.org/QubitProducts/metrics-flow.svg)
 <a name="intro"/>
 
 `metrics-flow` is a library that allows to create, aggregate and collect custom monitoring metrics from [Dataflow](https://cloud.google.com/dataflow/)
