@@ -4,16 +4,16 @@ import com.qubit.metricsflow.core.types.MetricUpdateKey;
 import com.qubit.metricsflow.core.types.MetricUpdateValue;
 import com.qubit.metricsflow.core.utils.WindowTypeTags;
 
-import com.google.cloud.dataflow.sdk.transforms.Aggregator;
-import com.google.cloud.dataflow.sdk.transforms.DoFn;
-import com.google.cloud.dataflow.sdk.transforms.Sum;
-import com.google.cloud.dataflow.sdk.values.KV;
+import org.apache.beam.sdk.metrics.Counter;
+import org.apache.beam.sdk.metrics.Metrics;
+import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.values.KV;
 
 public class BranchByWindowType extends DoFn<KV<MetricUpdateKey, MetricUpdateValue>, Void> {
-    private final Aggregator<Long, Long> fixedWindowMetrics = createAggregator("FixedWindowMetrics", new Sum.SumLongFn());
-    private final Aggregator<Long, Long> slidingWindowMetrics = createAggregator("SlidingWindowMetrics", new Sum.SumLongFn());
+    private final Counter fixedWindowMetrics = Metrics.counter(BranchByWindowType.class, "FixedWindowMetrics");
+    private final Counter slidingWindowMetrics = Metrics.counter(BranchByWindowType.class, "SlidingWindowMetrics");
 
-    @Override
+    @ProcessElement
     public void processElement(ProcessContext processContext) throws Exception {
         KV<MetricUpdateKey, MetricUpdateValue> event = processContext.element();
         MetricUpdateValue value = event.getValue();
@@ -27,12 +27,12 @@ public class BranchByWindowType extends DoFn<KV<MetricUpdateKey, MetricUpdateVal
     }
 
     private void sendToFixedWindowStream(ProcessContext processContext, KV<MetricUpdateKey, MetricUpdateValue> event) {
-        processContext.sideOutput(WindowTypeTags.FIXED_IN, event);
-        fixedWindowMetrics.addValue(1L);
+        processContext.output(WindowTypeTags.FIXED_IN, event);
+        fixedWindowMetrics.inc(1L);
     }
 
     private void sendToSlidingWindowStream(ProcessContext processContext, KV<MetricUpdateKey, MetricUpdateValue> event) {
-        processContext.sideOutput(WindowTypeTags.SLIDING_IN, event);
-        slidingWindowMetrics.addValue(1L);
+        processContext.output(WindowTypeTags.SLIDING_IN, event);
+        slidingWindowMetrics.inc(1L);
     }
 }

@@ -5,10 +5,10 @@ import com.qubit.metricsflow.core.types.MetricUpdateValue;
 import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
 import com.qubit.metricsflow.metrics.core.types.MetricWindowType;
 
-import com.google.cloud.dataflow.sdk.transforms.windowing.FixedWindows;
-import com.google.cloud.dataflow.sdk.transforms.windowing.Window;
-import com.google.cloud.dataflow.sdk.values.KV;
-import com.google.cloud.dataflow.sdk.values.PCollection;
+import org.apache.beam.sdk.transforms.windowing.FixedWindows;
+import org.apache.beam.sdk.transforms.windowing.Window;
+import org.apache.beam.sdk.values.KV;
+import org.apache.beam.sdk.values.PCollection;
 import org.joda.time.Duration;
 
 public class ApplyFixedWindowAggregations extends ApplyWindowAggregations {
@@ -21,11 +21,10 @@ public class ApplyFixedWindowAggregations extends ApplyWindowAggregations {
     }
 
     @Override
-    public PCollection<MetricUpdateEvent> apply(PCollection<KV<MetricUpdateKey, MetricUpdateValue>> input) {
-        return input.apply(
+    public PCollection<MetricUpdateEvent> expand(PCollection<KV<MetricUpdateKey, MetricUpdateValue>> input) {
+        return input.apply("CollectInFixedWindow",
             Window.<KV<MetricUpdateKey, MetricUpdateValue>>into(
                 FixedWindows.of(windowDuration))
-                .named("CollectInFixedWindow")
                 .withAllowedLateness(allowedLateness)
                 .discardingFiredPanes())
             .apply(new ApplyAggregationTransforms(MetricWindowType.Fixed));

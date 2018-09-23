@@ -12,8 +12,8 @@ import com.qubit.metricsflow.core.utils.MetricTypeTags;
 import com.qubit.metricsflow.metrics.core.types.MetricAggregationType;
 import com.qubit.metricsflow.metrics.core.types.MetricWindowType;
 
-import com.google.cloud.dataflow.sdk.transforms.DoFnTester;
-import com.google.cloud.dataflow.sdk.values.KV;
+import org.apache.beam.sdk.transforms.DoFnTester;
+import org.apache.beam.sdk.values.KV;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -22,42 +22,44 @@ import java.util.List;
 
 public class BranchByAggregationTypeTest {
     @Test
-    public void fixedWindowMetrics_shouldAllWork() {
+    public void fixedWindowMetrics_shouldAllWork() throws Exception {
         testAllMetricTypesFor(MetricWindowType.Fixed);
     }
 
     @Test
-    public void slidingWindowMetrics_shouldAllWork() {
+    public void slidingWindowMetrics_shouldAllWork() throws Exception {
         testAllMetricTypesFor(MetricWindowType.Sliding);
     }
 
     @Test(expected = RuntimeException.class)
-    public void  doFn_shouldRaiseAnException_ifNoMetricTypesArePresent_FixedWindow() {
+    public void doFn_shouldRaiseAnException_ifNoMetricTypesArePresent_FixedWindow() throws Exception {
         testNoMetricTypesPresentFor(MetricWindowType.Fixed);
     }
 
     @Test(expected = RuntimeException.class)
-    public void  doFn_shouldRaiseAnException_ifNoMetricTypesArePresent_SlidingWindow() {
+    public void doFn_shouldRaiseAnException_ifNoMetricTypesArePresent_SlidingWindow() throws Exception {
         testNoMetricTypesPresentFor(MetricWindowType.Sliding);
     }
 
-    private static void testNoMetricTypesPresentFor(MetricWindowType windowType) {
+    private static void testNoMetricTypesPresentFor(MetricWindowType windowType) throws Exception {
         DoFnTester<KV<MetricUpdateKey, MetricUpdateValue>, Void> fnTester = createFnTester(windowType);
         KV<MetricUpdateKey, MetricUpdateValue> event = makeKV(":(", 6.65, false);
 
-        List<Void> output = fnTester.processBatch(event);
+        fnTester.processElement(event);
+        List<Void> output = fnTester.takeOutputElements();
         TestUtils.assertThatListIsEmpty(output);
     }
 
-    private static void testAllMetricTypesFor(MetricWindowType windowType) {
+    private static void testAllMetricTypesFor(MetricWindowType windowType) throws Exception {
         DoFnTester<KV<MetricUpdateKey, MetricUpdateValue>, Void> fnTester = createFnTester(windowType);
         KV<MetricUpdateKey, MetricUpdateValue> event = makeKV("-_-", 6.66, true);
 
-        List<Void> output = fnTester.processBatch(event);
+        fnTester.processElement(event);
+        List<Void> output = fnTester.takeOutputElements();
         TestUtils.assertThatListIsEmpty(output);
 
         MetricTypeTags.getAll().forEach(tag -> {
-            List<KV<MetricUpdateKey, Double>> out = fnTester.takeSideOutputElements(tag);
+            List<KV<MetricUpdateKey, Double>> out = fnTester.takeOutputElements(tag);
             TestUtils.assertThatListIsNotEmpty(out);
 
             KV<MetricUpdateKey, Double> value = out.get(0);
@@ -80,7 +82,8 @@ public class BranchByAggregationTypeTest {
         return KV.of(key, val);
     }
 
-    private static DoFnTester<KV<MetricUpdateKey, MetricUpdateValue>, Void> createFnTester(MetricWindowType windowType) {
+    private static DoFnTester<KV<MetricUpdateKey, MetricUpdateValue>, Void> createFnTester(
+        MetricWindowType windowType) {
         return DoFnTester.of(new BranchByAggregationType(windowType));
     }
 }

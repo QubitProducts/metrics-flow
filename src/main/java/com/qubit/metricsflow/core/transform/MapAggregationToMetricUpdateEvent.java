@@ -4,11 +4,12 @@ import com.qubit.metricsflow.core.types.MetricUpdateKey;
 import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
 import com.qubit.metricsflow.metrics.core.types.MetricAggregationType;
 
-import com.google.cloud.dataflow.sdk.transforms.MapElements;
-import com.google.cloud.dataflow.sdk.transforms.PTransform;
-import com.google.cloud.dataflow.sdk.values.KV;
-import com.google.cloud.dataflow.sdk.values.PCollection;
-import com.google.cloud.dataflow.sdk.values.TypeDescriptor;
+import org.apache.beam.sdk.transforms.MapElements;
+import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.transforms.SerializableFunction;
+import org.apache.beam.sdk.values.KV;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.TypeDescriptor;
 
 public class MapAggregationToMetricUpdateEvent extends PTransform<PCollection<KV<MetricUpdateKey, Double>>,
     PCollection<MetricUpdateEvent>> {
@@ -20,13 +21,14 @@ public class MapAggregationToMetricUpdateEvent extends PTransform<PCollection<KV
     }
 
     @Override
-    public PCollection<MetricUpdateEvent> apply(PCollection<KV<MetricUpdateKey, Double>> input) {
+    public PCollection<MetricUpdateEvent> expand(PCollection<KV<MetricUpdateKey, Double>> input) {
         return input.apply(
-            MapElements.via((KV<MetricUpdateKey, Double> item) -> {
+            MapElements.into(new TypeDescriptor<MetricUpdateEvent>() {
+            }).via((SerializableFunction<KV<MetricUpdateKey, Double>, MetricUpdateEvent>) item -> {
                 MetricUpdateKey key = item.getKey();
                 String newMetricName = addSuffixToMetricName(key.getMetricName(), metricNameSuffix);
                 return new MetricUpdateEvent(newMetricName, key.getLabelNameValuePairs(), item.getValue());
-            }).withOutputType(new TypeDescriptor<MetricUpdateEvent>() {})
+            })
         );
     }
 

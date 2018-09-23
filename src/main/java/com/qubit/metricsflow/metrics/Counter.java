@@ -5,7 +5,7 @@ import com.qubit.metricsflow.metrics.core.mdef.MetricDefinitionBuilderBase;
 import com.qubit.metricsflow.metrics.core.mdef.MetricRecorderBase;
 import com.qubit.metricsflow.metrics.core.types.MetricAggregationType;
 
-import com.google.cloud.dataflow.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.DoFn;
 
 import java.util.EnumSet;
 import java.util.Set;

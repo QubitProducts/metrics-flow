@@ -5,10 +5,10 @@ import com.qubit.metricsflow.core.types.MetricUpdateValue;
 import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
 import com.qubit.metricsflow.metrics.core.types.MetricWindowType;
 
-import com.google.cloud.dataflow.sdk.transforms.windowing.SlidingWindows;
-import com.google.cloud.dataflow.sdk.transforms.windowing.Window;
-import com.google.cloud.dataflow.sdk.values.KV;
-import com.google.cloud.dataflow.sdk.values.PCollection;
+import org.apache.beam.sdk.transforms.windowing.SlidingWindows;
+import org.apache.beam.sdk.transforms.windowing.Window;
+import org.apache.beam.sdk.values.KV;
+import org.apache.beam.sdk.values.PCollection;
 import org.joda.time.Duration;
 
 public class ApplySlidingWindowAggregations extends ApplyWindowAggregations {
@@ -21,11 +21,9 @@ public class ApplySlidingWindowAggregations extends ApplyWindowAggregations {
     }
 
     @Override
-    public PCollection<MetricUpdateEvent> apply(PCollection<KV<MetricUpdateKey, MetricUpdateValue>> input) {
-        return input.apply(
-            Window.<KV<MetricUpdateKey, MetricUpdateValue>>into(
-                SlidingWindows.of(windowDuration).every(windowPeriod))
-                .named("CollectInSlidingWindow")
+    public PCollection<MetricUpdateEvent> expand(PCollection<KV<MetricUpdateKey, MetricUpdateValue>> input) {
+        return input.apply("CollectInSlidingWindow",
+                           Window.into(SlidingWindows.of(windowDuration).every(windowPeriod))
         ).apply(new ApplyAggregationTransforms(MetricWindowType.Sliding));
     }
 }

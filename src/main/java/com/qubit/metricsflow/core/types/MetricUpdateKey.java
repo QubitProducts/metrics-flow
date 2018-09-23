@@ -3,8 +3,8 @@ package com.qubit.metricsflow.core.types;
 import com.qubit.metricsflow.metrics.core.event.LabelNameValuePair;
 import com.qubit.metricsflow.metrics.core.mdef.MetricDefinition;
 
-import com.google.cloud.dataflow.sdk.coders.AvroCoder;
-import com.google.cloud.dataflow.sdk.coders.DefaultCoder;
+import org.apache.beam.sdk.coders.AvroCoder;
+import org.apache.beam.sdk.coders.DefaultCoder;
 
 import java.io.Serializable;
 import java.util.List;

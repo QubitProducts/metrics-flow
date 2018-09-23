@@ -10,22 +10,24 @@ import com.qubit.metricsflow.metrics.transform.DumpMetricsToLog;
 import com.qubit.metricsflow.metrics.transform.DumpMetricsToPubSub;
 import com.qubit.metricsflow.metrics.transform.DumpMetricsTransform;
 
-import com.google.cloud.dataflow.sdk.Pipeline;
-import com.google.cloud.dataflow.sdk.values.KV;
-import com.google.cloud.dataflow.sdk.values.PCollection;
-import com.google.cloud.dataflow.sdk.values.PCollectionList;
-import com.google.cloud.dataflow.sdk.values.PCollectionTuple;
+import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.values.KV;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PCollectionList;
+import org.apache.beam.sdk.values.PCollectionTuple;
 
 public class MetricsBox {
     private static final String MFLOW_TRANSFORM_NAME = "MetricsFlow";
+    private MetricsFlowOptions options;
     private PCollectionList<KV<MetricUpdateKey, MetricUpdateValue>> metricsCollections;
 
-    private MetricsBox(Pipeline pipeline) {
+    private MetricsBox(Pipeline pipeline, MetricsFlowOptions options) {
         metricsCollections = PCollectionList.empty(pipeline);
+        this.options = options;
     }
 
-    public static MetricsBox of(Pipeline pipeline) {
-        return new MetricsBox(pipeline);
+    public static MetricsBox of(Pipeline pipeline, MetricsFlowOptions options) {
+        return new MetricsBox(pipeline, options);
     }
 
     public void add(PCollection<KV<MetricUpdateKey, MetricUpdateValue>> mCollection) {
@@ -33,12 +35,25 @@ public class MetricsBox {
     }
 
     public PCollectionTuple apply() {
-        return metricsCollections.apply(MFLOW_TRANSFORM_NAME, new ApplyMetricsFlowTransforms());
+        String projectName = options.getIncludeProjectNameLabel() ? options.getProject() : null;
+        String jobName = options.getIncludeJobNameLabel() ? options.getJobName() : null;
+
+        return metricsCollections.apply(MFLOW_TRANSFORM_NAME,
+                                        new ApplyMetricsFlowTransforms(projectName, jobName,
+                                                                       options.getFixedWindowDurationSec(),
+                                                                       options.getFixedWindowAllowedLatenessSec(),
+                                                                       options.getSlidingWindowDurationSec(),
+                                                                       options.getSlidingWindowPeriodSec()));
     }
 
     public void run() {
         DumpMetricsTransform outTransform = getTransformFromOptions();
-        PCollectionTuple tpl = metricsCollections.apply(MFLOW_TRANSFORM_NAME, new ApplyMetricsFlowTransforms());
+        String projectName = options.getIncludeProjectNameLabel() ? options.getProject() : null;
+        String jobName = options.getIncludeJobNameLabel() ? options.getJobName() : null;
+
+        PCollectionTuple tpl = metricsCollections.apply(MFLOW_TRANSFORM_NAME, new ApplyMetricsFlowTransforms(
+            projectName, jobName, options.getFixedWindowDurationSec(), options.getFixedWindowAllowedLatenessSec(),
+            options.getSlidingWindowDurationSec(), options.getSlidingWindowDurationSec()));
         tpl.get(WindowTypeTags.FIXED_OUT)
             .apply("FixedWindowMetricsOut", outTransform);
         tpl.get(WindowTypeTags.SLIDING_OUT)
@@ -46,9 +61,6 @@ public class MetricsBox {
     }
 
     private DumpMetricsTransform getTransformFromOptions() {
-        MetricsFlowOptions options =  metricsCollections.getPipeline()
-            .getOptions().as(MetricsFlowOptions.class);
-
         String resourceName = options.getMetricsOutputResourceName();
         if (resourceName.startsWith("pubsub://")) {
             return new DumpMetricsToPubSub(resourceName.substring(9, resourceName.length()));

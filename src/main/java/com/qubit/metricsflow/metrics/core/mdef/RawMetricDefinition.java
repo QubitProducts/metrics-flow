@@ -2,7 +2,7 @@ package com.qubit.metricsflow.metrics.core.mdef;
 
 import com.qubit.metricsflow.metrics.core.types.MetricAggregationType;
 
-import com.google.cloud.dataflow.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.DoFn;
 
 import java.util.EnumSet;
 import java.util.Set;

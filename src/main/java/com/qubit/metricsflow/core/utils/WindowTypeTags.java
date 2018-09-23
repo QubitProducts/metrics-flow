@@ -4,8 +4,8 @@ import com.qubit.metricsflow.core.types.MetricUpdateKey;
 import com.qubit.metricsflow.core.types.MetricUpdateValue;
 import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
 
-import com.google.cloud.dataflow.sdk.values.KV;
-import com.google.cloud.dataflow.sdk.values.TupleTag;
+import org.apache.beam.sdk.values.KV;
+import org.apache.beam.sdk.values.TupleTag;
 
 public class WindowTypeTags {
     public static final TupleTag<KV<MetricUpdateKey, MetricUpdateValue>> FIXED_IN =
