@@ -9,7 +9,7 @@ public class ConvertMetricUpdateEventToJson extends DoFn<MetricUpdateEvent, Stri
     private static ObjectMapper mapper = new ObjectMapper();
 
     @ProcessElement
-    public void processElement(DoFn.ProcessContext processContext) throws Exception {
+    public void processElement(ProcessContext processContext) throws Exception {
         String result = mapper.writeValueAsString(processContext.element());
         processContext.output(result);
     }
