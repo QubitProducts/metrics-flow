@@ -5,10 +5,12 @@ import com.qubit.metricsflow.core.transform.PTransformForParDoBound;
 import com.qubit.metricsflow.core.transform.PTransformForParDoBoundMulti;
 import com.qubit.metricsflow.core.utils.MetricUtils;
 
-import com.google.cloud.dataflow.sdk.values.PCollection;
-import com.google.cloud.dataflow.sdk.values.PCollectionTuple;
-import com.google.cloud.dataflow.sdk.values.TupleTag;
-import com.google.cloud.dataflow.sdk.values.TupleTagList;
+import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PCollectionTuple;
+import org.apache.beam.sdk.values.TupleTag;
+import org.apache.beam.sdk.values.TupleTagList;
 
 // This class contains a bunch of hacks transparently adding an extra
 // side output tag for metrics collection to DoFns. Once metrics are
@@ -19,25 +21,24 @@ import com.google.cloud.dataflow.sdk.values.TupleTagList;
 // CollectMetrics can work with ParDos with existing side outputs.
 public class CollectMetrics {
     // for ParDos with no side outputs
-    public static <InputT, OutputT> PaDoBoundWrapper<InputT, OutputT> from(ParDo.Bound<InputT, OutputT> parDo) {
+    public static <InputT, OutputT> PaDoBoundWrapper<InputT, OutputT> from(ParDo.SingleOutput<InputT, OutputT> parDo) {
          return new PaDoBoundWrapper<>(parDo.withOutputTags(new TupleTag<>(MetricUtils.DEFAULT_STREAM_NAME),
                                                             TupleTagList.of(MetricUtils.METRICS_TAG)));
     }
 
     // for ParDos with existing side outputs
-    public static <InputT, OutputT> ParDoBoundMultiWrapper<InputT, OutputT> from(ParDo.BoundMulti<InputT, OutputT> parDo) {
-        TupleTagList sideOutputs = parDo.getSideOutputTags().and(MetricUtils.METRICS_TAG);
-        ParDo.BoundMulti<InputT, OutputT> boundMulti = new ParDo.BoundMulti<>(parDo.getName(), parDo.getSideInputs(),
-            parDo.getMainOutputTag(), sideOutputs, parDo.getFn(),
-            parDo.getFn().getClass());
+    public static <InputT, OutputT> ParDoBoundMultiWrapper<InputT, OutputT> from(ParDo.MultiOutput<InputT, OutputT> parDo) {
+        TupleTagList sideOutputs = parDo.getAdditionalOutputTags().and(MetricUtils.METRICS_TAG);
+        //DoFn<InputT, OutputT> fn, List<PCollectionView<?>> sideInputs, TupleTag<OutputT> mainOutputTag, TupleTagList additionalOutputTags, ItemSpec<? extends Class<?>> fnDisplayData
+        ParDo.MultiOutput<InputT, OutputT> boundMulti = ParDo.of(parDo.getFn()).withOutputTags(parDo.getMainOutputTag(), sideOutputs);
         return new ParDoBoundMultiWrapper<>(boundMulti);
     }
 
     // a wrapper for ParDos with no side outputs
     public static class PaDoBoundWrapper<InputT, OutputT> {
-        private ParDo.BoundMulti<InputT, OutputT> boundMulti;
+        private ParDo.MultiOutput<InputT, OutputT> boundMulti;
 
-        private PaDoBoundWrapper(ParDo.BoundMulti<InputT, OutputT> boundMulti) {
+        private PaDoBoundWrapper(ParDo.MultiOutput<InputT, OutputT> boundMulti) {
             this.boundMulti = boundMulti;
         }
 
@@ -48,9 +49,9 @@ public class CollectMetrics {
 
     // a wrapper for ParDos with existing side outputs
     public static class ParDoBoundMultiWrapper<InputT, OutputT> {
-        private ParDo.BoundMulti<InputT, OutputT> boundMulti;
+        private ParDo.MultiOutput<InputT, OutputT> boundMulti;
 
-        private ParDoBoundMultiWrapper(ParDo.BoundMulti<InputT, OutputT> boundMulti) {
+        private ParDoBoundMultiWrapper(ParDo.MultiOutput<InputT, OutputT> boundMulti) {
             this.boundMulti = boundMulti;
         }
 

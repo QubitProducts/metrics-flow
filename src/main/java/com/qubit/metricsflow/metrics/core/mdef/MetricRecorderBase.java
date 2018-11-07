@@ -6,8 +6,8 @@ import com.qubit.metricsflow.core.types.MetricUpdateValue;
 import com.qubit.metricsflow.core.utils.MetricUtils;
 import com.qubit.metricsflow.metrics.core.event.LabelNameValuePair;
 
-import com.google.cloud.dataflow.sdk.transforms.DoFn;
-import com.google.cloud.dataflow.sdk.values.KV;
+import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.values.KV;
 
 import java.io.Serializable;
 import java.util.LinkedList;
@@ -36,7 +36,7 @@ public abstract class MetricRecorderBase<R extends MetricRecorderBase> implement
                 MetricUpdateKey.of(metricDefinition, labelValues),
                 MetricUpdateValue.of(metricDefinition, value)
             );
-            pctx.sideOutput(MetricUtils.METRICS_TAG, event);
+            pctx.output(MetricUtils.METRICS_TAG, event);
         }
     }
 }

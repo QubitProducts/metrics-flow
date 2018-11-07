@@ -8,16 +8,16 @@ import com.qubit.metricsflow.metrics.MetricsBox;
 import com.qubit.metricsflow.metrics.core.event.LabelNameValuePair;
 import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
 
-import com.google.cloud.dataflow.sdk.Pipeline;
-import com.google.cloud.dataflow.sdk.options.PipelineOptionsFactory;
-import com.google.cloud.dataflow.sdk.testing.DataflowAssert;
-import com.google.cloud.dataflow.sdk.testing.TestPipeline;
 import com.google.cloud.dataflow.sdk.transforms.CollectMetrics;
-import com.google.cloud.dataflow.sdk.transforms.Create;
-import com.google.cloud.dataflow.sdk.transforms.DoFn;
-import com.google.cloud.dataflow.sdk.transforms.ParDo;
-import com.google.cloud.dataflow.sdk.values.PCollection;
-import com.google.cloud.dataflow.sdk.values.PCollectionTuple;
+import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.testing.PAssert;
+import org.apache.beam.sdk.testing.TestPipeline;
+import org.apache.beam.sdk.transforms.Create;
+import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PCollectionTuple;
 import org.joda.time.Instant;
 import org.junit.Test;
 
@@ -28,7 +28,7 @@ public class MetricsFlowIT {
     private static final String GAUGE_METRIC_NAME = "my_special_gauge";
 
     private static class OutputWithCurrentTs extends DoFn<String, String> {
-        @Override
+        @ProcessElement
         public void processElement(ProcessContext processContext) throws Exception {
             processContext.outputWithTimestamp(processContext.element(), Instant.now());
         }
@@ -41,7 +41,7 @@ public class MetricsFlowIT {
             .labels("chuck", "doctor")
             .create();
 
-        @Override
+        @ProcessElement
         public void processElement(ProcessContext processContext) throws Exception {
             processContext.output(processContext.element());
             numStrings.record(processContext)
@@ -61,7 +61,7 @@ public class MetricsFlowIT {
             .calculateMin()
             .create();
 
-        @Override
+        @ProcessElement
         public void processElement(ProcessContext processContext) throws Exception {
             String item = processContext.element();
             processContext.output(item);
@@ -89,7 +89,7 @@ public class MetricsFlowIT {
 
     private void runIT(MetricsFlowOptions options) {
         Pipeline p = TestPipeline.create(options);
-        MetricsBox mbox = MetricsBox.of(p);
+        MetricsBox mbox = MetricsBox.of(p, options);
 
         p.apply(Create.of("s1x", "s2xx", "s3xxx", "s4xxxx"))
             .apply(ParDo.of(new OutputWithCurrentTs()))
@@ -110,8 +110,8 @@ public class MetricsFlowIT {
         MetricUpdateEvent gaugeMavgEvent = createMUEvent(options, GAUGE_METRIC_NAME + "_mean_gauge",
                                                          4.5, "jack=is-a", "dull=boy");
 
-        DataflowAssert.that(fixedWindowResults).containsInAnyOrder(counterUpdateEvent, gaugeMaxEvent, gaugeMinEvent);
-        DataflowAssert.that(slidingWindowEvents).containsInAnyOrder(gaugeMavgEvent, gaugeMavgEvent);
+        PAssert.that(fixedWindowResults).containsInAnyOrder(counterUpdateEvent, gaugeMaxEvent, gaugeMinEvent);
+        PAssert.that(slidingWindowEvents).containsInAnyOrder(gaugeMavgEvent, gaugeMavgEvent);
 
         p.run();
     }

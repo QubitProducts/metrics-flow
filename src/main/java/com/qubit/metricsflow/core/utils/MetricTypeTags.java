@@ -2,9 +2,9 @@ package com.qubit.metricsflow.core.utils;
 
 import com.qubit.metricsflow.core.types.MetricUpdateKey;
 
-import com.google.cloud.dataflow.sdk.values.KV;
-import com.google.cloud.dataflow.sdk.values.TupleTag;
-import com.google.cloud.dataflow.sdk.values.TupleTagList;
+import org.apache.beam.sdk.values.KV;
+import org.apache.beam.sdk.values.TupleTag;
+import org.apache.beam.sdk.values.TupleTagList;
 
 import java.util.Arrays;
 import java.util.List;

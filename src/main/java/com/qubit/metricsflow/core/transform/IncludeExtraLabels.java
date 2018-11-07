@@ -5,29 +5,32 @@ import com.qubit.metricsflow.core.utils.ImplicitLabelNames;
 import com.qubit.metricsflow.metrics.core.event.LabelNameValuePair;
 import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
 
-import com.google.cloud.dataflow.sdk.transforms.MapElements;
-import com.google.cloud.dataflow.sdk.transforms.PTransform;
-import com.google.cloud.dataflow.sdk.values.PCollection;
-import com.google.cloud.dataflow.sdk.values.TypeDescriptor;
+import org.apache.beam.sdk.transforms.MapElements;
+import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.TypeDescriptor;
 
 import java.util.List;
 
 public class IncludeExtraLabels extends PTransform<PCollection<MetricUpdateEvent>, PCollection<MetricUpdateEvent>> {
-    public IncludeExtraLabels() {
+    private final String projectName;
+    private final String jobName;
+
+    public IncludeExtraLabels(String projectName, String jobName) {
         super("IncludeExtraLabels");
+        this.projectName = projectName;
+        this.jobName = jobName;
     }
 
     @Override
-    public PCollection<MetricUpdateEvent> apply(PCollection<MetricUpdateEvent> input) {
-        MetricsFlowOptions options = input.getPipeline().getOptions().as(MetricsFlowOptions.class);
-        String projectName = options.getIncludeProjectNameLabel() ? options.getProject() : null;
-        String jobName = options.getIncludeJobNameLabel() ? options.getJobName() : null;
+    public PCollection<MetricUpdateEvent> expand(PCollection<MetricUpdateEvent> input) {
         if (projectName == null && jobName == null) {
             return input;
         }
 
         return input.apply(
-            MapElements.via((MetricUpdateEvent event) -> {
+            MapElements.into(new TypeDescriptor<MetricUpdateEvent>() {
+            }).via((MetricUpdateEvent event) -> {
                 MetricUpdateEvent newEvent = new MetricUpdateEvent(event);
                 List<LabelNameValuePair> nvPairs = newEvent.getLabelNameValuePairs();
                 if (projectName != null) {
@@ -43,7 +46,7 @@ public class IncludeExtraLabels extends PTransform<PCollection<MetricUpdateEvent
 
                 nvPairs.sort(LabelNameValuePair::compareTo);
                 return newEvent;
-            }).withOutputType(new TypeDescriptor<MetricUpdateEvent>() {})
+            })
         );
     }
 }

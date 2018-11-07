@@ -1,52 +1,66 @@
 package com.qubit.metricsflow.core.transform;
 
-import com.qubit.metricsflow.core.MetricsFlowOptions;
 import com.qubit.metricsflow.core.fn.BranchByWindowType;
 import com.qubit.metricsflow.core.fn.VerifyMetricKey;
 import com.qubit.metricsflow.core.types.MetricUpdateKey;
 import com.qubit.metricsflow.core.types.MetricUpdateValue;
 import com.qubit.metricsflow.core.utils.WindowTypeTags;
 
-import com.google.cloud.dataflow.sdk.transforms.Flatten;
-import com.google.cloud.dataflow.sdk.transforms.PTransform;
-import com.google.cloud.dataflow.sdk.transforms.ParDo;
-import com.google.cloud.dataflow.sdk.values.KV;
-import com.google.cloud.dataflow.sdk.values.PCollectionList;
-import com.google.cloud.dataflow.sdk.values.PCollectionTuple;
-import com.google.cloud.dataflow.sdk.values.TupleTag;
-import com.google.cloud.dataflow.sdk.values.TupleTagList;
+import org.apache.beam.sdk.transforms.Flatten;
+import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.values.KV;
+import org.apache.beam.sdk.values.PCollectionList;
+import org.apache.beam.sdk.values.PCollectionTuple;
+import org.apache.beam.sdk.values.TupleTag;
+import org.apache.beam.sdk.values.TupleTagList;
 
 import java.util.Arrays;
 
 public class ApplyMetricsFlowTransforms
     extends PTransform<PCollectionList<KV<MetricUpdateKey, MetricUpdateValue>>, PCollectionTuple> {
 
+    private final String project;
+    private final String jobName;
+    private final Integer fixedWindowDurationSec;
+    private final Integer fixedWindowAllowedLatenessSec;
+    private final Integer slidingWindowDurationSec;
+    private final Integer slidingWindowPeriodicSec;
+
+    public ApplyMetricsFlowTransforms(String project, String jobName, Integer fixedWindowDurationSec,
+                                      Integer fixedWindowAllowedLatenessSec,
+                                      Integer slidingWindowDurationSec,
+                                      Integer slidingWindowPeriodicSec) {
+        this.project = project;
+        this.jobName = jobName;
+        this.fixedWindowDurationSec = fixedWindowDurationSec;
+        this.fixedWindowAllowedLatenessSec = fixedWindowAllowedLatenessSec;
+        this.slidingWindowDurationSec = slidingWindowDurationSec;
+        this.slidingWindowPeriodicSec = slidingWindowPeriodicSec;
+    }
+
     @Override
-    public PCollectionTuple apply(PCollectionList<KV<MetricUpdateKey, MetricUpdateValue>> input) {
-        MetricsFlowOptions options = input.getPipeline().getOptions().as(MetricsFlowOptions.class);
+    public PCollectionTuple expand(PCollectionList<KV<MetricUpdateKey, MetricUpdateValue>> input) {
 
         PCollectionTuple results = input.apply(Flatten.pCollections())
-            .apply(ParDo.of(new VerifyMetricKey())
-                       .named("VerifyMetricKey"))
-            .apply(ParDo.of(new BranchByWindowType())
-                       .named("BranchByWindowType")
-                       .withOutputTags(new TupleTag<>("NoDefaultOutput"),
-                                       TupleTagList.of(
-                                           Arrays.asList(WindowTypeTags.FIXED_IN,
-                                                         WindowTypeTags.SLIDING_IN))));
+            .apply("VerifyMetricKey", ParDo.of(new VerifyMetricKey()))
+            .apply("BranchByWindowType", ParDo.of(new BranchByWindowType())
+                .withOutputTags(new TupleTag<>("NoDefaultOutput"),
+                                TupleTagList.of(
+                                    Arrays.asList(WindowTypeTags.FIXED_IN,
+                                                  WindowTypeTags.SLIDING_IN))));
 
         return PCollectionTuple.empty(results.getPipeline())
             .and(WindowTypeTags.FIXED_OUT,
                  results.get(WindowTypeTags.FIXED_IN)
-                     .apply(new ApplyFixedWindowAggregations(options.getFixedWindowDurationSec(),
-                                                             options.getFixedWindowAllowedLatenessSec()))
-                     .apply(new IncludeExtraLabels())
+                     .apply(new ApplyFixedWindowAggregations(fixedWindowDurationSec, fixedWindowAllowedLatenessSec))
+                     .apply(new IncludeExtraLabels(project, jobName))
             )
             .and(WindowTypeTags.SLIDING_OUT,
                  results.get(WindowTypeTags.SLIDING_IN)
-                     .apply(new ApplySlidingWindowAggregations(options.getSlidingWindowDurationSec(),
-                                                               options.getSlidingWindowPeriodSec()))
-                     .apply(new IncludeExtraLabels())
+                     .apply(
+                         new ApplySlidingWindowAggregations(slidingWindowDurationSec, slidingWindowPeriodicSec))
+                     .apply(new IncludeExtraLabels(project, jobName))
             );
     }
 }

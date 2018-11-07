@@ -11,14 +11,14 @@ import com.qubit.metricsflow.core.utils.MetricTypeTags;
 import com.qubit.metricsflow.metrics.core.event.MetricUpdateEvent;
 import com.qubit.metricsflow.metrics.core.types.MetricWindowType;
 
-import com.google.cloud.dataflow.sdk.transforms.Flatten;
-import com.google.cloud.dataflow.sdk.transforms.PTransform;
-import com.google.cloud.dataflow.sdk.transforms.ParDo;
-import com.google.cloud.dataflow.sdk.values.KV;
-import com.google.cloud.dataflow.sdk.values.PCollection;
-import com.google.cloud.dataflow.sdk.values.PCollectionList;
-import com.google.cloud.dataflow.sdk.values.PCollectionTuple;
-import com.google.cloud.dataflow.sdk.values.TupleTag;
+import org.apache.beam.sdk.transforms.Flatten;
+import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.values.KV;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PCollectionList;
+import org.apache.beam.sdk.values.PCollectionTuple;
+import org.apache.beam.sdk.values.TupleTag;
 
 public class ApplyAggregationTransforms extends PTransform<PCollection<KV<MetricUpdateKey, MetricUpdateValue>>,
     PCollection<MetricUpdateEvent>> {
@@ -30,11 +30,10 @@ public class ApplyAggregationTransforms extends PTransform<PCollection<KV<Metric
     }
 
     @Override
-    public PCollection<MetricUpdateEvent> apply(PCollection<KV<MetricUpdateKey, MetricUpdateValue>> input) {
+    public PCollection<MetricUpdateEvent> expand(PCollection<KV<MetricUpdateKey, MetricUpdateValue>> input) {
 
-        PCollectionTuple result = input.apply(
+        PCollectionTuple result = input.apply("BranchByAggregationType",
             ParDo.of(new BranchByAggregationType(windowType))
-                .named("BranchByAggregationType")
                 .withOutputTags(new TupleTag<>("NoDefaultOutput"),
                                 MetricTypeTags.getTupleTagList()));
 

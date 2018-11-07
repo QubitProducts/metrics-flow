@@ -1,25 +1,25 @@
 package com.qubit.metricsflow.core.transform;
 
-import com.qubit.metricsflow.metrics.MetricsBox;
 import com.qubit.metricsflow.core.utils.MetricUtils;
+import com.qubit.metricsflow.metrics.MetricsBox;
 
-import com.google.cloud.dataflow.sdk.transforms.PTransform;
-import com.google.cloud.dataflow.sdk.transforms.ParDo;
-import com.google.cloud.dataflow.sdk.values.PCollection;
-import com.google.cloud.dataflow.sdk.values.PCollectionTuple;
+import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PCollectionTuple;
 
 public class PTransformForParDoBoundMulti<InputT, OutputT> extends PTransform<PCollection<InputT>, PCollectionTuple> {
     private final MetricsBox mbox;
-    private final ParDo.BoundMulti<InputT, OutputT> boundMulti;
+    private final ParDo.MultiOutput<InputT, OutputT> boundMulti;
 
-    public PTransformForParDoBoundMulti(ParDo.BoundMulti<InputT, OutputT> boundMulti, MetricsBox mbox) {
+    public PTransformForParDoBoundMulti(ParDo.MultiOutput<InputT, OutputT> boundMulti, MetricsBox mbox) {
         super(boundMulti.getName());
         this.boundMulti = boundMulti;
         this.mbox = mbox;
     }
 
     @Override
-    public PCollectionTuple apply(PCollection<InputT> input) {
+    public PCollectionTuple expand(PCollection<InputT> input) {
         PCollectionTuple result = input.apply(boundMulti);
         mbox.add(result.get(MetricUtils.METRICS_TAG));
         return result;
